@@ -43,7 +43,7 @@ logger.addHandler(
 
 
 def check_tokens():
-    '''Проверяем наличие всех необходимых токенов'''
+    """Проверяем наличие всех необходимых токенов."""
     if not PRACTICUM_TOKEN:
         logging.critical(
             'Не задан токен для доступа к API сервиса Практикум.Домашка')
@@ -58,7 +58,7 @@ def check_tokens():
 
 
 def send_message(bot, message):
-    '''Отправка сообщения в Telegram'''
+    """Отправка сообщения в Telegram."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logging.debug('Сообщение успешно отправлено в Telegram: {message}')
@@ -67,7 +67,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    '''Получение статуса домашней работы с API сервиса Практикум.Домашка'''
+    """Получение статуса домашней работы с API сервиса Практикум.Домашка."""
     params = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
@@ -97,7 +97,7 @@ def get_api_answer(timestamp):
 
 
 def check_response(response):
-    '''Проверка ответа от API сервиса Практикум.Домашка'''
+    """Проверка ответа от API сервиса Практикум.Домашка."""
     if not isinstance(response, dict):
         raise TypeError("В ответе от API ожидался словарь")
     if 'homeworks' not in response:
@@ -109,7 +109,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    '''Парсинг статуса домашней работы.'''
+    """Парсинг статуса домашней работы."""
     homework_name = homework.get('homework_name')
     if homework_name:
         homework_status = homework.get('status')
