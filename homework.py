@@ -1,7 +1,3 @@
-# Спасибо за ценные советы! К сожалению, не всё логирование получается убрать
-# в main, чтобы ЯП-тесты пропускали файл.
-
-
 import logging
 import os
 import requests
@@ -56,7 +52,6 @@ def check_tokens():
                        f'{name}. Выполнение программы прекращено.')
             logger.critical(message)
             sys.exit()
-    return True
 
 
 def send_message(bot, message):
@@ -107,6 +102,12 @@ def check_response(response):
             'В ответе от API отсутствует ожидаемый ключ "homeworks"')
     if not isinstance(response["homeworks"], list):
         raise TypeError('В ответе от API ожидался список домашних работ')
+    if not isinstance(response.get('current_date'), int):
+        raise TypeError('Ответ не содержит число current_date')
+    if not response.get('current_date'):
+        raise KeyError('Отсутствует значение ключа current date')
+    if not response.get('homeworks'):
+        raise KeyError('Не допустимое значение* ключа homeworks')
     return True
 
 
@@ -126,33 +127,28 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-    if not check_tokens():
-        sys.exit
+    check_tokens()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    timestamp = int(time .time())
-    verdicr_message = ''
+    timestamp = int(time.time())
+    last_message = ''
+    previous_message = None
     while True:
         try:
             response = get_api_answer(timestamp)
             check_response(response)
-            if not isinstance(response.get('current_date'), int):
-                logging.error('Ответ не содержит число current_date')
-            if not response.get('current_date'):
-                logging.error('Отсутствует значение ключа current date')
-            if not response.get('homeworks'):
-                logging.error('Не допустимое значение* ключа homeworks')
-                timestamp = response.get('current_date')
             if response['homeworks']:
                 new_message = parse_status(response['homeworks'][0])
-            if new_message != verdicr_message:
-                verdicr_message = new_message
-                send_message(bot, verdicr_message)
+            if new_message != last_message:
+                last_message = new_message
+                send_message(bot, last_message)
             else:
                 logging.debug("Новых фообщений нет")
         except Exception as e:
             message = f'Бот упал с ошибкой: {e}'
-            send_message(bot, message)
-            logging.error(message)
+            if message != previous_message:
+                previous_message = message
+                send_message(bot, message)
+                logging.error(message)
         finally:
             time.sleep(RETRY_PERIOD)
 
